@@ -9,7 +9,7 @@ module.exports = {
   extends: [
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
-    'plugin:import/recommended',
+    'plugin:import/typescript',
     'plugin:jest/recommended',
   ],
   root: true,
@@ -76,12 +76,5 @@ module.exports = {
       },
     },
   ],
-  settings: {
-    'import/resolver': {
-      node: {
-        moduleDirectory: ['node_modules', 'src'],
-        extensions: ['.js', '.ts'],
-      },
-    },
-  },
+  settings: {},
 };
