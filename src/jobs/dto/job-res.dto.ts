@@ -10,4 +10,5 @@ export interface JobsResData {
 }
 
 export class JobResDto extends BaseResDto<JobResData> {}
+
 export class JobsResDto extends BaseResDto<JobsResData> {}
