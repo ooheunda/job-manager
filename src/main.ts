@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from '@/app.module';
 import { appOptions } from '@/app.option';
+import { GlobalExceptionFilter } from '@/common/exceptions';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, appOptions);
@@ -23,6 +24,7 @@ async function bootstrap(): Promise<void> {
   SwaggerModule.setup('api-docs', app, document);
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.setGlobalPrefix('api');
 
   await app.listen(port);
