@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PageQueryDto } from '@/common/dto';
 import { CreateJobDto, JobResData, JobsResData } from '@/jobs/dto';
@@ -14,6 +14,16 @@ export class JobsService {
     const jobs = await this.jobsRepository.findAllJobs(page, limit);
 
     return { jobs };
+  }
+
+  async findJobById(id: string): Promise<JobResData> {
+    const job = await this.jobsRepository.findJobById(id);
+
+    if (!job) {
+      throw new NotFoundException('작업을 찾을 수 없습니다.');
+    }
+
+    return { job };
   }
 
   async createJob(createJobDto: CreateJobDto): Promise<JobResData> {

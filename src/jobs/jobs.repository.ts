@@ -15,7 +15,7 @@ export class JobsRepository {
   }
 
   async onModuleInit(): Promise<void> {
-    this.jobsIndex = await this.getJobsIndex();
+    this.jobsIndex = await this.getJobsLength();
   }
 
   async findAllJobs(page: number, limit: number): Promise<Job[]> {
@@ -25,6 +25,17 @@ export class JobsRepository {
     const endIndex = startIndex + limit;
 
     return jobs.slice(startIndex, endIndex);
+  }
+
+  async findJobById(id: string): Promise<Job> | null {
+    try {
+      const jobIndex = await this.getJobIndexById(id);
+      const job = jobIndex ? await this.getJobByIndex(jobIndex) : null;
+
+      return job;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async createJob(title: string, description: string, status: JobStatus): Promise<Job> {
@@ -49,10 +60,10 @@ export class JobsRepository {
     return newJob;
   }
 
-  private async getJobsIndex(): Promise<number> {
+  private async getJobsLength(): Promise<number> {
     try {
       const jobs = await this.getJobs();
-      return jobs.length - 1;
+      return jobs.length;
     } catch (error) {
       return 0;
     }
@@ -64,6 +75,24 @@ export class JobsRepository {
       return jobs;
     } catch (error) {
       return [];
+    }
+  }
+
+  private async getJobByIndex(index: number): Promise<Job> | null {
+    try {
+      const job = await this.jobsDb.getData(`/jobs[${index}]`);
+      return job;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private async getJobIndexById(id: string): Promise<number> | null {
+    try {
+      const jobIndex = await this.jobsIndexDb.getData(`/jobsIndex/${id}`);
+      return jobIndex;
+    } catch (error) {
+      return null;
     }
   }
 }
