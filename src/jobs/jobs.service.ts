@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { PageQueryDto } from '@/common/dto';
+import { BusinessException } from '@/common/exceptions';
 import { CreateJobDto, JobResData, JobsResData, SearchJobQueryDto } from '@/jobs/dto';
 import { JobsRepository } from '@/jobs/jobs.repository';
 import { JobStatus } from '@/jobs/types';
@@ -28,7 +29,7 @@ export class JobsService {
     const job = await this.jobsRepository.findJobById(id);
 
     if (!job) {
-      throw new NotFoundException('작업을 찾을 수 없습니다.');
+      throw new BusinessException('작업을 찾을 수 없습니다.', HttpStatus.NOT_FOUND, `not-found-job: ${id}`);
     }
 
     return { job };

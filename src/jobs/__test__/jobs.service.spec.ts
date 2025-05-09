@@ -1,7 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PageQueryDto } from '@/common/dto';
+import { BusinessException } from '@/common/exceptions';
 import { CreateJobDto, SearchJobQueryDto } from '@/jobs/dto';
 import { JobsRepository } from '@/jobs/jobs.repository';
 import { JobsService } from '@/jobs/jobs.service';
@@ -194,7 +194,7 @@ describe('JobsService', () => {
     it('작업을 찾을 수 없으면 404 예외를 던진다', async () => {
       mockRepo.findJobById.mockResolvedValue(null);
 
-      await expect(service.findJobById(mockJobId)).rejects.toThrow(NotFoundException);
+      await expect(service.findJobById(mockJobId)).rejects.toThrow(BusinessException);
     });
   });
 
