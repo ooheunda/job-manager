@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 import { PageQueryDto } from '@/common/dto';
-import { CreateJobDto, JobResDto, JobsResDto } from '@/jobs/dto';
+import { CreateJobDto, JobResDto, JobsResDto, SearchJobQueryDto } from '@/jobs/dto';
 import { JobsService } from '@/jobs/jobs.service';
 
 @Controller('jobs')
@@ -13,6 +13,13 @@ export class JobsController {
     const jobs = await this.jobsService.findAllJobs(pageQueryDto);
 
     return new JobsResDto(true, '작업 목록 조회 성공', jobs, null);
+  }
+
+  @Get('search')
+  async searchJobs(@Query() searchJobQueryDto: SearchJobQueryDto): Promise<JobsResDto> {
+    const jobs = await this.jobsService.searchJobs(searchJobQueryDto);
+
+    return new JobsResDto(true, '작업 검색 성공', jobs, null);
   }
 
   @Get(':id')

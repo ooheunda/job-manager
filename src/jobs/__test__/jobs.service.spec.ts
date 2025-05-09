@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PageQueryDto } from '@/common/dto';
-import { CreateJobDto } from '@/jobs/dto';
+import { CreateJobDto, SearchJobQueryDto } from '@/jobs/dto';
 import { JobsRepository } from '@/jobs/jobs.repository';
 import { JobsService } from '@/jobs/jobs.service';
 import { Job, JobStatus } from '@/jobs/types';
@@ -20,7 +20,10 @@ describe('JobsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         JobsService,
-        { provide: JobsRepository, useValue: { createJob: jest.fn(), findAllJobs: jest.fn(), findJobById: jest.fn() } },
+        {
+          provide: JobsRepository,
+          useValue: { findAllJobs: jest.fn(), searchJobs: jest.fn(), findJobById: jest.fn(), createJob: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -79,6 +82,90 @@ describe('JobsService', () => {
       await service.findAllJobs(mockPageQueryDto);
 
       expect(mockRepo.findAllJobs).toHaveBeenCalledWith(mockPageQueryDto.page, 10);
+    });
+  });
+
+  describe('searchJobs', () => {
+    let mockSearchJobQueryDto: SearchJobQueryDto;
+
+    beforeEach(() => {
+      mockSearchJobQueryDto = {
+        page: 1,
+        limit: 10,
+        search: 'title',
+        status: JobStatus.PENDING,
+      };
+    });
+
+    it('성공적으로 작업을 검색한다', async () => {
+      mockRepo.searchJobs.mockResolvedValue(mockJobs);
+
+      const result = await service.searchJobs(mockSearchJobQueryDto);
+
+      expect(result).toHaveProperty('jobs');
+      expect(result.jobs).toBeInstanceOf(Array);
+      expect(mockRepo.searchJobs).toHaveBeenCalledWith(
+        mockSearchJobQueryDto.page,
+        mockSearchJobQueryDto.limit,
+        mockSearchJobQueryDto.search,
+        mockSearchJobQueryDto.status,
+      );
+    });
+
+    it('page 쿼리 파라미터가 없으면 기본값으로 1을 사용한다', async () => {
+      mockSearchJobQueryDto.page = undefined;
+      mockRepo.searchJobs.mockResolvedValue(mockJobs);
+
+      await service.searchJobs(mockSearchJobQueryDto);
+
+      expect(mockRepo.searchJobs).toHaveBeenCalledWith(
+        1,
+        mockSearchJobQueryDto.limit,
+        mockSearchJobQueryDto.search,
+        mockSearchJobQueryDto.status,
+      );
+    });
+
+    it('limit 쿼리 파라미터가 없으면 기본값으로 10을 사용한다', async () => {
+      mockSearchJobQueryDto.limit = undefined;
+      mockRepo.searchJobs.mockResolvedValue(mockJobs);
+
+      await service.searchJobs(mockSearchJobQueryDto);
+
+      expect(mockRepo.searchJobs).toHaveBeenCalledWith(
+        mockSearchJobQueryDto.page,
+        10,
+        mockSearchJobQueryDto.search,
+        mockSearchJobQueryDto.status,
+      );
+    });
+
+    it('search 쿼리 파라미터가 없으면 모든 title을 검색한다', async () => {
+      mockSearchJobQueryDto.search = undefined;
+      mockRepo.searchJobs.mockResolvedValue(mockJobs);
+
+      await service.searchJobs(mockSearchJobQueryDto);
+
+      expect(mockRepo.searchJobs).toHaveBeenCalledWith(
+        mockSearchJobQueryDto.page,
+        mockSearchJobQueryDto.limit,
+        '',
+        mockSearchJobQueryDto.status,
+      );
+    });
+
+    it('status 쿼리 파라미터가 없으면 모든 status를 검색한다', async () => {
+      mockSearchJobQueryDto.status = undefined;
+      mockRepo.searchJobs.mockResolvedValue(mockJobs);
+
+      await service.searchJobs(mockSearchJobQueryDto);
+
+      expect(mockRepo.searchJobs).toHaveBeenCalledWith(
+        mockSearchJobQueryDto.page,
+        mockSearchJobQueryDto.limit,
+        mockSearchJobQueryDto.search,
+        undefined, // 그대로 넘김
+      );
     });
   });
 

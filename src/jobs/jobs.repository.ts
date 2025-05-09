@@ -21,10 +21,21 @@ export class JobsRepository {
   async findAllJobs(page: number, limit: number): Promise<Job[]> {
     const jobs = await this.getJobs();
 
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
+    return this.paginateJobs(jobs, page, limit);
+  }
 
-    return jobs.slice(startIndex, endIndex);
+  async searchJobs(page: number, limit: number, search: string, status: JobStatus): Promise<Job[]> {
+    const jobs = await this.getJobs();
+
+    const filteredJobs = jobs.filter((job) => {
+      if (status) {
+        return job.title.includes(search) && job.status === status;
+      }
+
+      return job.title.includes(search);
+    });
+
+    return this.paginateJobs(filteredJobs, page, limit);
   }
 
   async findJobById(id: string): Promise<Job> | null {
@@ -94,5 +105,12 @@ export class JobsRepository {
     } catch (error) {
       return null;
     }
+  }
+
+  private paginateJobs(jobs: Job[], page: number, limit: number): Job[] {
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return jobs.slice(startIndex, endIndex);
   }
 }

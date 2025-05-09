@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PageQueryDto } from '@/common/dto';
-import { CreateJobDto, JobResData, JobsResData } from '@/jobs/dto';
+import { CreateJobDto, JobResData, JobsResData, SearchJobQueryDto } from '@/jobs/dto';
 import { JobsRepository } from '@/jobs/jobs.repository';
 import { JobStatus } from '@/jobs/types';
 
@@ -12,6 +12,13 @@ export class JobsService {
   async findAllJobs(pageQueryDto: PageQueryDto): Promise<JobsResData> {
     const { page = 1, limit = 10 } = pageQueryDto;
     const jobs = await this.jobsRepository.findAllJobs(page, limit);
+
+    return { jobs };
+  }
+
+  async searchJobs(searchJobQueryDto: SearchJobQueryDto): Promise<JobsResData> {
+    const { page = 1, limit = 10, search = '', status } = searchJobQueryDto;
+    const jobs = await this.jobsRepository.searchJobs(page, limit, search, status);
 
     return { jobs };
   }
