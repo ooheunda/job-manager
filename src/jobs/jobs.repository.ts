@@ -61,7 +61,6 @@ export class JobsRepository {
       description,
       status,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
 
     await Promise.all([

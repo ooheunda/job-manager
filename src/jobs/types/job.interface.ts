@@ -9,7 +9,6 @@ export interface Job {
   description: string;
   status: JobStatus;
   createdAt: string; // ISO
-  updatedAt: string; // ISO
 }
 
 export interface JobIndex {

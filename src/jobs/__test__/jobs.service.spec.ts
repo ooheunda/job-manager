@@ -42,7 +42,6 @@ describe('JobsService', () => {
       description: 'description',
       status: JobStatus.PENDING,
       createdAt: '2025-05-09T03:14:46.098Z',
-      updatedAt: '2025-05-09T03:14:46.098Z',
     };
     mockJobs = [mockJob];
   });
