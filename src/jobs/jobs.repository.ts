@@ -18,6 +18,15 @@ export class JobsRepository {
     this.jobsIndex = await this.getJobsIndex();
   }
 
+  async findAllJobs(page: number, limit: number): Promise<Job[]> {
+    const jobs = await this.getJobs();
+
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return jobs.slice(startIndex, endIndex);
+  }
+
   async createJob(title: string, description: string, status: JobStatus): Promise<Job> {
     const newJob: Job = {
       id: crypto.randomUUID(),
@@ -42,10 +51,19 @@ export class JobsRepository {
 
   private async getJobsIndex(): Promise<number> {
     try {
-      const jobs = await this.jobsDb.getData('/jobs');
+      const jobs = await this.getJobs();
       return jobs.length - 1;
     } catch (error) {
       return 0;
+    }
+  }
+
+  private async getJobs(): Promise<Job[]> {
+    try {
+      const jobs = await this.jobsDb.getData('/jobs');
+      return jobs;
+    } catch (error) {
+      return [];
     }
   }
 }
