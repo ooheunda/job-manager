@@ -17,7 +17,6 @@ async function bootstrap(): Promise<void> {
     .setTitle('Job Manager')
     .setDescription('작업 관리 시스템 API 문서')
     .setVersion('1.0')
-    .addTag('jobs')
     .addServer(`http://localhost:${port}/api`)
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
