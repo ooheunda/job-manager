@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Config, JsonDB } from 'node-json-db';
 
+import { DBError } from '@/common/exceptions';
 import { JobStatus } from '@/jobs/types';
 import { Job } from '@/jobs/types';
 @Injectable()
 export class JobsRepository {
+  private readonly logger = new Logger(JobsRepository.name);
+
   private readonly jobsDb: JsonDB;
   private readonly jobsIndexDb: JsonDB;
   private jobsIndex: number;
@@ -47,7 +50,7 @@ export class JobsRepository {
 
       return job;
     } catch (error) {
-      throw error;
+      throw new DBError(error.message, `getJobById DBError: ${id}`);
     }
   }
 
@@ -65,7 +68,7 @@ export class JobsRepository {
       this.jobsDb.push('/jobs[]', newJob),
       this.jobsIndexDb.push(`/jobsIndex/${newJob.id}`, this.jobsIndex),
     ]).catch((error) => {
-      throw error;
+      throw new DBError(error.message, `createJob DBError: ${newJob.id}`);
     });
 
     if (status === JobStatus.PENDING) {
@@ -77,15 +80,15 @@ export class JobsRepository {
   }
 
   async updatePendingJobs(): Promise<void> {
-    const failedJobs = [];
+    const failedJobs: PendingJobs[] = [];
 
     await Promise.all(
       this.pendingJobs.map(async (pendingJob) => {
         try {
           await this.jobsDb.push(`/jobs[${pendingJob.index}]/status`, JobStatus.COMPLETED);
-          console.log(`${pendingJob.id} 업데이트 완료`); //TODO: logger 적용
+          this.logger.log(`${pendingJob.id} 업데이트 완료`);
         } catch (error) {
-          console.log(`${pendingJob.id} 업데이트 실패`, error);
+          this.logger.error(`${pendingJob.id} 업데이트 실패`, error);
           failedJobs.push(pendingJob);
         }
       }),
@@ -99,7 +102,12 @@ export class JobsRepository {
       const jobs = await this.jobsDb.getData('/jobs');
       return jobs;
     } catch (error) {
-      return [];
+      if (error.message.includes(`Can\'t find dataPath`)) {
+        await this.jobsDb.push('/jobs', []);
+        return [];
+      }
+
+      throw new DBError(error.message, `getJobs DBError`);
     }
   }
 
@@ -108,7 +116,7 @@ export class JobsRepository {
       const job = await this.jobsDb.getData(`/jobs[${index}]`);
       return job;
     } catch (error) {
-      return null;
+      throw new DBError(error.message, `getJobByIndex DBError: ${index}`);
     }
   }
 
@@ -117,17 +125,17 @@ export class JobsRepository {
       const jobIndex = await this.jobsIndexDb.getData(`/jobsIndex/${id}`);
       return jobIndex;
     } catch (error) {
-      return null;
+      if (error.message.includes(`Can\'t find dataPath`)) {
+        return null;
+      }
+
+      throw new DBError(error.message, `getJobIndexById DBError: ${id}`);
     }
   }
 
   private async getJobsLength(): Promise<number> {
-    try {
-      const jobs = await this.getJobs();
-      return jobs.length;
-    } catch (error) {
-      return 0;
-    }
+    const jobs = await this.getJobs();
+    return jobs.length;
   }
 
   private async getPendingJobs(): Promise<PendingJobs[]> {
@@ -138,13 +146,18 @@ export class JobsRepository {
       const typedPendingJobs: PendingJobs[] = await Promise.all(
         pendingJobIds.map(async (id) => {
           const index = await this.getJobIndexById(id);
+
+          if (index === null) {
+            throw new DBError(`getPendingJobs DBError`, `getPendingJobs index DBError: ${id}`);
+          }
+
           return { id, index };
         }),
       );
 
       return typedPendingJobs;
     } catch (error) {
-      return [];
+      throw new DBError(error.message, `getPendingJobs DBError`);
     }
   }
 
