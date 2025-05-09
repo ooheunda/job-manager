@@ -22,7 +22,13 @@ describe('JobsService', () => {
         JobsService,
         {
           provide: JobsRepository,
-          useValue: { findAllJobs: jest.fn(), searchJobs: jest.fn(), findJobById: jest.fn(), createJob: jest.fn() },
+          useValue: {
+            findAllJobs: jest.fn(),
+            searchJobs: jest.fn(),
+            findJobById: jest.fn(),
+            createJob: jest.fn(),
+            updatePendingJobs: jest.fn(),
+          },
         },
       ],
     }).compile();
@@ -224,6 +230,14 @@ describe('JobsService', () => {
         mockCreateJobDto.description,
         JobStatus.PENDING,
       );
+    });
+  });
+
+  describe('updatePendingJobs', () => {
+    it('성공적으로 대기 중인 작업을 업데이트한다', async () => {
+      await service.updatePendingJobs();
+
+      expect(mockRepo.updatePendingJobs).toHaveBeenCalled();
     });
   });
 });

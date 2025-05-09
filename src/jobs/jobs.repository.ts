@@ -8,6 +8,7 @@ export class JobsRepository {
   private readonly jobsDb: JsonDB;
   private readonly jobsIndexDb: JsonDB;
   private jobsIndex: number;
+  private pendingJobs: PendingJobs[];
 
   constructor() {
     this.jobsDb = new JsonDB(new Config('data/jobs.json', true, true));
@@ -16,6 +17,7 @@ export class JobsRepository {
 
   async onModuleInit(): Promise<void> {
     this.jobsIndex = await this.getJobsLength();
+    this.pendingJobs = await this.getPendingJobs();
   }
 
   async findAllJobs(page: number, limit: number): Promise<Job[]> {
@@ -66,18 +68,30 @@ export class JobsRepository {
       throw error;
     });
 
+    if (status === JobStatus.PENDING) {
+      this.pendingJobs.push({ id: newJob.id, index: this.jobsIndex });
+    }
     this.jobsIndex++;
 
     return newJob;
   }
 
-  private async getJobsLength(): Promise<number> {
-    try {
-      const jobs = await this.getJobs();
-      return jobs.length;
-    } catch (error) {
-      return 0;
-    }
+  async updatePendingJobs(): Promise<void> {
+    const failedJobs = [];
+
+    await Promise.all(
+      this.pendingJobs.map(async (pendingJob) => {
+        try {
+          await this.jobsDb.push(`/jobs[${pendingJob.index}]/status`, JobStatus.COMPLETED);
+          console.log(`${pendingJob.id} 업데이트 완료`); //TODO: logger 적용
+        } catch (error) {
+          console.log(`${pendingJob.id} 업데이트 실패`, error);
+          failedJobs.push(pendingJob);
+        }
+      }),
+    );
+
+    this.pendingJobs = failedJobs;
   }
 
   private async getJobs(): Promise<Job[]> {
@@ -107,10 +121,42 @@ export class JobsRepository {
     }
   }
 
+  private async getJobsLength(): Promise<number> {
+    try {
+      const jobs = await this.getJobs();
+      return jobs.length;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  private async getPendingJobs(): Promise<PendingJobs[]> {
+    try {
+      const pendingJobs = (await this.getJobs()).filter((job) => job.status === JobStatus.PENDING);
+      const pendingJobIds = pendingJobs.map((job) => job.id);
+
+      const typedPendingJobs: PendingJobs[] = await Promise.all(
+        pendingJobIds.map(async (id) => {
+          const index = await this.getJobIndexById(id);
+          return { id, index };
+        }),
+      );
+
+      return typedPendingJobs;
+    } catch (error) {
+      return [];
+    }
+  }
+
   private paginateJobs(jobs: Job[], page: number, limit: number): Job[] {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
 
     return jobs.slice(startIndex, endIndex);
   }
+}
+
+interface PendingJobs {
+  id: string; // uuid
+  index: number;
 }
