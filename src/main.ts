@@ -12,6 +12,7 @@ async function bootstrap(): Promise<void> {
   const port = config.get<number>('PORT') || 3000;
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.setGlobalPrefix('api');
 
   await app.listen(port);
 }
