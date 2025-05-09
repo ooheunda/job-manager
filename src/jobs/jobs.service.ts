@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { PageQueryDto } from '@/common/dto';
 import { CreateJobDto, JobResData, JobsResData, SearchJobQueryDto } from '@/jobs/dto';
@@ -38,5 +39,10 @@ export class JobsService {
     const createdJob = await this.jobsRepository.createJob(title, description, status);
 
     return { job: createdJob };
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async updatePendingJobs(): Promise<void> {
+    await this.jobsRepository.updatePendingJobs();
   }
 }
