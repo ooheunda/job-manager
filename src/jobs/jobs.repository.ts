@@ -41,7 +41,7 @@ export class JobsRepository {
   async findJobById(id: string): Promise<Job> | null {
     try {
       const jobIndex = await this.getJobIndexById(id);
-      const job = jobIndex === undefined ? await this.getJobByIndex(jobIndex) : null;
+      const job = jobIndex !== null ? await this.getJobByIndex(jobIndex) : null;
 
       return job;
     } catch (error) {
